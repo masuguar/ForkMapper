@@ -25,6 +25,7 @@
 package tk.mybatis.mapper.mapperhelper;
 
 import tk.mybatis.mapper.LogicDeleteException;
+import tk.mybatis.mapper.annotation.InheritTable;
 import tk.mybatis.mapper.annotation.LogicDelete;
 import tk.mybatis.mapper.annotation.Version;
 import tk.mybatis.mapper.entity.EntityColumn;
@@ -50,6 +51,17 @@ public class SqlHelper {
      * @return
      */
     public static String getDynamicTableName(Class<?> entityClass, String tableName) {
+        if( entityClass.isAnnotationPresent(InheritTable.class) ){
+            StringBuilder sql = new StringBuilder();
+            sql.append("<choose>");
+            sql.append("<when test=\"@tk.mybatis.mapper.util.OGNL@isInheritable(_parameter)\">");
+            sql.append( getBindValue("dynamicTableName","\"@tk.mybatis.mapper.util.OGNL@getInheritTable(_parameter)\"") );
+            sql.append("${dynamicTableName}\n");
+            sql.append("</when>");
+            appendOtherwise(tableName, sql);
+            sql.append("</choose>");
+            return sql.toString();
+        }
         if (IDynamicTableName.class.isAssignableFrom(entityClass)) {
             StringBuilder sql = new StringBuilder();
             sql.append("<choose>");
@@ -57,9 +69,7 @@ public class SqlHelper {
             sql.append("${dynamicTableName}\n");
             sql.append("</when>");
             //不支持指定列的时候查询全部列
-            sql.append("<otherwise>");
-            sql.append(tableName);
-            sql.append("</otherwise>");
+            appendOtherwise(tableName,sql);
             sql.append("</choose>");
             return sql.toString();
         } else {
@@ -84,9 +94,7 @@ public class SqlHelper {
                 sql.append("${" + parameterName + ".dynamicTableName}");
                 sql.append("</when>");
                 //不支持指定列的时候查询全部列
-                sql.append("<otherwise>");
-                sql.append(tableName);
-                sql.append("</otherwise>");
+                appendOtherwise(tableName,sql);
                 sql.append("</choose>");
                 return sql.toString();
             } else {
@@ -97,7 +105,11 @@ public class SqlHelper {
             return tableName;
         }
     }
-
+    private static void appendOtherwise(String tableName, StringBuilder sql) {
+        sql.append("<otherwise>");
+        sql.append(tableName);
+        sql.append("</otherwise>");
+    }
     /**
      * <bind name="pattern" value="'%' + _parameter.getTitle() + '%'" />
      *
@@ -125,7 +137,13 @@ public class SqlHelper {
         sql.append("value='").append(value).append("'/>");
         return sql.toString();
     }
-
+    public static String getBindValue(String key, String value) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("<bind name=\"");
+        sql.append(key).append("\" ");
+        sql.append("value=").append(value).append("/>");
+        return sql.toString();
+    }
     /**
      * <bind name="pattern" value="'%' + _parameter.getTitle() + '%'" />
      *

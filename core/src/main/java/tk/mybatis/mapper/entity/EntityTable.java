@@ -31,6 +31,8 @@ import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.type.TypeException;
 import org.apache.ibatis.type.TypeHandler;
 import tk.mybatis.mapper.MapperException;
+import tk.mybatis.mapper.annotation.InheritTable;
+import tk.mybatis.mapper.inherit.InheritTableFormatter;
 import tk.mybatis.mapper.util.StringUtil;
 
 import javax.persistence.Table;
@@ -64,7 +66,9 @@ public class EntityTable {
     private ResultMap resultMap;
     //类
     private Class<?> entityClass;
-
+    private boolean inheritable;
+    private String splitKey;
+    private Class<? extends InheritTableFormatter> formatter;
     public EntityTable(Class<?> entityClass) {
         this.entityClass = entityClass;
     }
@@ -267,5 +271,23 @@ public class EntityTable {
         this.name = table.name();
         this.catalog = table.catalog();
         this.schema = table.schema();
+    }
+
+    public boolean isInheritable() {
+        return inheritable;
+    }
+
+    public String getSplitKey() {
+        return splitKey;
+    }
+
+    public Class<? extends InheritTableFormatter> getFormatter() {
+        return formatter;
+    }
+
+    public void setInheritTable(InheritTable inheritTable){
+        this.inheritable = true;
+        this.splitKey = inheritTable.spliter();
+        this.formatter = inheritTable.formatter();
     }
 }

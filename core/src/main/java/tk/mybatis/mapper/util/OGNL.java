@@ -25,10 +25,12 @@
 package tk.mybatis.mapper.util;
 
 import tk.mybatis.mapper.MapperException;
+import tk.mybatis.mapper.annotation.InheritTable;
 import tk.mybatis.mapper.annotation.LogicDelete;
 import tk.mybatis.mapper.entity.EntityColumn;
 import tk.mybatis.mapper.entity.Example;
 import tk.mybatis.mapper.entity.IDynamicTableName;
+import tk.mybatis.mapper.entity.InheritTableHelper;
 import tk.mybatis.mapper.mapperhelper.EntityHelper;
 import tk.mybatis.mapper.mapperhelper.SqlHelper;
 
@@ -185,6 +187,35 @@ public abstract class OGNL {
     public static boolean hasNoSelectColumns(Object parameter) {
         return !hasSelectColumns(parameter);
     }
+
+    /**
+     * 获取实体的子表名称
+     * @param parameter
+     * @return
+     */
+    public static String getInheritTable( Object parameter){
+        try {
+            return InheritTableHelper.getInheritTableName(parameter);
+        }catch (Exception e){
+            throw new MapperException(SAFE_DELETE_ERROR, e);
+        }
+    }
+    /**
+     * 判断是否支持表继承
+     * @param parameter
+     * @return
+     */
+    public static boolean isInheritable( Object parameter ){
+        if(parameter == null ){
+            return false;
+        }
+        Class<?> type = parameter.getClass();
+        if( type.isAnnotationPresent(InheritTable.class) ){
+            return true;
+        }
+        return false;
+    }
+
 
     /**
      * 判断参数是否支持动态表名

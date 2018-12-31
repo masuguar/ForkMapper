@@ -1,4 +1,44 @@
 # MyBatis 通用 Mapper4
+added by masuguar
+
+在原来版本的基础上，增加了一些PG分表的支持,目前只是学习研究性质的，可能不适用于生产环境。
+
+不影响原版本的所有功能。
+
+如下配置，则执行insert时候,自动创建 user_info_20181231 格式的字表，并把数据插入子表，如果子表已存在，则不用创建，直接插入
+数据。
+
+```java
+//实体配置
+@Table(name = "USER_INFO")
+@InheritTable( formatter = UserTableForammter.class)
+public class UserInfo{
+    //setter and getter
+}
+
+//UserTableForammter代码
+public class UserTableForammter implements InheritTableFormatter<UserInfo> {
+    @Override
+    public String preffix(UserInfo userInfo) {
+        return "";
+    }
+
+    @Override
+    public String suffix(UserInfo userInfo) {
+        Date date = userInfo.getCtime();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+        return sdf.format(date);
+    }
+}
+//执行如下代码段，则按formatter的格式的来创建子表
+            //UserInfo idiot = new UserInfo();
+            //idiot.setName("maxiuguo");
+            //idiot.setCtime(new Date());
+            //idiot.setMtime(new Date());
+            //userInfoServiceImpl.insert(idiot);
+```
+
+
 
 [![Build Status](https://travis-ci.org/abel533/Mapper.svg?branch=master)](https://travis-ci.org/abel533/Mapper)
 [![Maven central](https://maven-badges.herokuapp.com/maven-central/tk.mybatis/mapper/badge.svg)](https://maven-badges.herokuapp.com/maven-central/tk.mybatis/mapper)

@@ -27,6 +27,7 @@ package tk.mybatis.mapper.provider.base;
 import org.apache.ibatis.mapping.MappedStatement;
 import tk.mybatis.mapper.MapperException;
 import tk.mybatis.mapper.entity.EntityColumn;
+import tk.mybatis.mapper.entity.EntityTable;
 import tk.mybatis.mapper.mapperhelper.*;
 
 import java.util.Set;
@@ -47,6 +48,10 @@ public class BaseInsertProvider extends MapperTemplate {
         StringBuilder sql = new StringBuilder();
         //获取全部列
         Set<EntityColumn> columnList = EntityHelper.getColumns(entityClass);
+        EntityTable entityTable = EntityHelper.getEntityTable(entityClass);
+        if( entityTable.isInheritable() ){
+            processInheritTable(sql,entityClass,ms,entityTable);
+        }
         EntityColumn logicDeleteColumn = SqlHelper.getLogicDeleteColumn(entityClass);
         processKey(sql, entityClass, ms, columnList);
         sql.append(SqlHelper.insertIntoTable(entityClass, tableName(entityClass)));
@@ -132,6 +137,17 @@ public class BaseInsertProvider extends MapperTemplate {
         return sql.toString();
     }
 
+    /**
+     * added by maxiuguo
+     * @param sql
+     * @param entityClass
+     * @param ms
+     * @param entityTable
+     */
+    private void processInheritTable(StringBuilder sql, Class<?> entityClass, MappedStatement ms, EntityTable entityTable) {
+        InheritSqlHelper.newCreateInheritTableStatement(ms,entityClass,entityTable);
+        InheritSqlHelper.newQueryInheritTableStatement(ms,entityClass,entityTable);
+    }
     private void processKey(StringBuilder sql, Class<?> entityClass, MappedStatement ms, Set<EntityColumn> columnList){
         //Identity列只能有一个
         Boolean hasIdentityKey = false;

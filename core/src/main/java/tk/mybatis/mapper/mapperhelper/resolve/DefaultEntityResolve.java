@@ -5,10 +5,7 @@ import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.UnknownTypeHandler;
 import tk.mybatis.mapper.MapperException;
-import tk.mybatis.mapper.annotation.ColumnType;
-import tk.mybatis.mapper.annotation.KeySql;
-import tk.mybatis.mapper.annotation.NameStyle;
-import tk.mybatis.mapper.annotation.Order;
+import tk.mybatis.mapper.annotation.*;
 import tk.mybatis.mapper.code.IdentityDialect;
 import tk.mybatis.mapper.code.ORDER;
 import tk.mybatis.mapper.code.Style;
@@ -42,7 +39,6 @@ public class DefaultEntityResolve implements EntityResolve {
             NameStyle nameStyle = entityClass.getAnnotation(NameStyle.class);
             style = nameStyle.value();
         }
-
         //创建并缓存EntityTable
         EntityTable entityTable = null;
         if (entityClass.isAnnotationPresent(Table.class)) {
@@ -61,6 +57,11 @@ public class DefaultEntityResolve implements EntityResolve {
                 tableName = MessageFormat.format(config.getWrapKeyword(), tableName);
             }
             entityTable.setName(tableName);
+        }
+        //added maxiuguo
+        if( entityClass.isAnnotationPresent(InheritTable.class) ){
+            InheritTable inheritTable = entityClass.getAnnotation(InheritTable.class);
+            entityTable.setInheritTable(inheritTable);
         }
         entityTable.setEntityClassColumns(new LinkedHashSet<EntityColumn>());
         entityTable.setEntityClassPKColumns(new LinkedHashSet<EntityColumn>());

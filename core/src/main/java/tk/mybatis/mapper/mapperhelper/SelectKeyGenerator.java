@@ -31,6 +31,9 @@ import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.RowBounds;
+import tk.mybatis.mapper.entity.EntityTable;
+import tk.mybatis.mapper.entity.InheritTableHelper;
+import tk.mybatis.mapper.inherit.InheritTableInfo;
 
 import java.sql.Statement;
 import java.util.List;
@@ -52,9 +55,11 @@ public class SelectKeyGenerator implements KeyGenerator {
 
     @Override
     public void processBefore(Executor executor, MappedStatement ms, Statement stmt, Object parameter) {
+        processInheritTable(executor,ms,parameter);
         if (executeBefore) {
             processGeneratedKeys(executor, ms, parameter);
         }
+        //ms.getConfiguration().getMappedStatement();
     }
 
     @Override
@@ -63,7 +68,32 @@ public class SelectKeyGenerator implements KeyGenerator {
             processGeneratedKeys(executor, ms, parameter);
         }
     }
+    private void processInheritTable( Executor executor, MappedStatement ms, Object parameter ) {
+        EntityTable entityTable = EntityHelper.getEntityTable(parameter.getClass());
+        if( !entityTable.isInheritable() ){
+            return;
+        }
+        Configuration configuration = ms.getConfiguration();
+        try {
 
+            String inheritTable = InheritTableHelper.getInheritTableName(parameter, entityTable);
+            MappedStatement queryTableStatment = configuration.getMappedStatement(ms.getId()+ InheritSqlHelper.INHERIT_QUERY_SUFFIX,false);
+            //TODO 这个后续要缓存起来，不用每次都查数据库
+            List<Integer> values = executor.query(queryTableStatment, inheritTable, RowBounds.DEFAULT, Executor.NO_RESULT_HANDLER);
+            if( values != null && !values.isEmpty() ){
+                Integer count = values.get(0);
+                if( count == 0 ){
+                    MappedStatement createTableStatment = configuration.getMappedStatement(ms.getId()+ InheritSqlHelper.INHERIT_CREATE_SUFFIX,false);
+                    InheritTableInfo tableInfo = new InheritTableInfo();
+                    tableInfo.setInheritTable(inheritTable);
+                    tableInfo.setMainTable(entityTable.getName());
+                    executor.query(createTableStatment,tableInfo,RowBounds.DEFAULT,Executor.NO_RESULT_HANDLER);
+                }
+            }
+        }catch (Exception e){
+            throw new ExecutorException("Error create inherit Table. Cause: " + e, e);
+        }
+    }
     private void processGeneratedKeys(Executor executor, MappedStatement ms, Object parameter) {
         try {
             if (parameter != null && keyStatement != null && keyStatement.getKeyProperties() != null) {
