@@ -6,6 +6,14 @@ public class InheritTableInfo {
 
     private String inheritTable;
 
+    public InheritTableInfo() {
+    }
+
+    public InheritTableInfo(String mainTable, String inheritTable) {
+        this.mainTable = mainTable;
+        this.inheritTable = inheritTable;
+    }
+
     public String getMainTable() {
         return mainTable;
     }

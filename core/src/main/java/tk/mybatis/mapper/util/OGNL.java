@@ -30,7 +30,7 @@ import tk.mybatis.mapper.annotation.LogicDelete;
 import tk.mybatis.mapper.entity.EntityColumn;
 import tk.mybatis.mapper.entity.Example;
 import tk.mybatis.mapper.entity.IDynamicTableName;
-import tk.mybatis.mapper.entity.InheritTableHelper;
+import tk.mybatis.mapper.inherit.InheritTableHelper;
 import tk.mybatis.mapper.mapperhelper.EntityHelper;
 import tk.mybatis.mapper.mapperhelper.SqlHelper;
 

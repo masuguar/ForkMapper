@@ -32,7 +32,7 @@ import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.RowBounds;
 import tk.mybatis.mapper.entity.EntityTable;
-import tk.mybatis.mapper.entity.InheritTableHelper;
+import tk.mybatis.mapper.inherit.InheritTableHelper;
 import tk.mybatis.mapper.inherit.InheritTableInfo;
 
 import java.sql.Statement;
@@ -77,17 +77,20 @@ public class SelectKeyGenerator implements KeyGenerator {
         try {
 
             String inheritTable = InheritTableHelper.getInheritTableName(parameter, entityTable);
+            //如果缓存已存在则直接返回
+            if( InheritTableHelper.inheritTableExist(inheritTable) ){
+                return;
+            }
+
             MappedStatement queryTableStatment = configuration.getMappedStatement(ms.getId()+ InheritSqlHelper.INHERIT_QUERY_SUFFIX,false);
-            //TODO 这个后续要缓存起来，不用每次都查数据库
             List<Integer> values = executor.query(queryTableStatment, inheritTable, RowBounds.DEFAULT, Executor.NO_RESULT_HANDLER);
             if( values != null && !values.isEmpty() ){
                 Integer count = values.get(0);
                 if( count == 0 ){
                     MappedStatement createTableStatment = configuration.getMappedStatement(ms.getId()+ InheritSqlHelper.INHERIT_CREATE_SUFFIX,false);
-                    InheritTableInfo tableInfo = new InheritTableInfo();
-                    tableInfo.setInheritTable(inheritTable);
-                    tableInfo.setMainTable(entityTable.getName());
+                    InheritTableInfo tableInfo = new InheritTableInfo(entityTable.getName(),inheritTable);
                     executor.query(createTableStatment,tableInfo,RowBounds.DEFAULT,Executor.NO_RESULT_HANDLER);
+                    InheritTableHelper.addInheritTable(inheritTable);
                 }
             }
         }catch (Exception e){
