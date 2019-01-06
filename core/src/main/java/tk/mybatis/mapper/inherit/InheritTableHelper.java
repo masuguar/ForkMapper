@@ -17,10 +17,11 @@ public class InheritTableHelper {
         return inheritTableSet.contains(inheritTable);
     }
 
-    public synchronized static void addInheritTable( String inheritTable ){
-        if( inheritTableSet.contains(inheritTable) ){
-            return ;
-        }
+    /**
+     * 底层是使用putIfAbsent实现的，因此不用加锁
+     * @param inheritTable
+     */
+    public  static void addInheritTable( String inheritTable ){
         inheritTableSet.add(inheritTable);
     }
 
